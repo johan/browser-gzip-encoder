@@ -153,7 +153,11 @@ package com.probertson.utils
 			{
 				os = 11; // NTFS -- WinXP, Win2000, WinNT
 			}
-			else if (Capabilities.os == "MacOS")
+			else if (Capabilities.os.indexOf("Mac OS") >= 0)
+			{
+				os = 3; // Unix
+			}
+			else // no other OS is currently supported in Adobe AIR, but Linux will surely be next
 			{
 				os = 3; // Unix
 			}
