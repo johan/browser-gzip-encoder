@@ -23,6 +23,8 @@ Portions created by the Initial Developer are Copyright (C) 2007
 the Initial Developer. All Rights Reserved.
 
 Contributor(s):
+Danny Patterson (dannypatterson.com).
+
 
 ***** END LICENSE BLOCK *****
 */
@@ -305,7 +307,28 @@ package com.probertson.utils
 			var srcBytes:ByteArray = new ByteArray();
 			srcStream.readBytes(srcBytes, 0, srcStream.bytesAvailable);
 			srcStream.close();
-
+			
+			return parseGZIPData(srcBytes, srcFile.name);
+		}
+		
+		/**
+		 * Parses a GZIP-format ByteArray into an object with properties representing the important
+		 * characteristics of the GZIP data (the header and footer metadata, as well as the 
+		 * actual compressed data).
+		 * 
+		 * NOTE: parseGZIPData was extracted from parseGZIPFile by Danny Patterson (dannypatterson.com).
+		 * 
+		 * @param srcBytes	The bytearay of the GZIP data to parse.
+		 * @param srcName	The name of the GZIP file.
+		 * 
+		 * @returns		An object containing the information from the source GZIP data.
+		 * 
+		 * @throws ArgumentError	If the <code>srcBytes</code> argument is null
+		 * 
+		 * @throws IllegalOperationError If the specified data is not in GZIP-format.
+		 */
+		public function parseGZIPData(srcBytes:ByteArray, srcName:String = ""):GZIPFile
+		{
 			// For details of gzip format, see IETF RFC 1952:
 			// http://www.ietf.org/rfc/rfc1952
 			
@@ -316,21 +339,21 @@ package com.probertson.utils
 			var id1:uint = srcBytes.readUnsignedByte();
 			if (id1 != 0x1f)
 			{
-				throw new IllegalOperationError("The specified file is not a GZIP file format file.");
+				throw new IllegalOperationError("The specified data is not in GZIP file format structure.");
 			}
 			
 			// 1 byte ID2 -- should be 139/0x8b or else throw an error
 			var id2:uint = srcBytes.readUnsignedByte();
 			if (id2 != 0x8b)
 			{
-				throw new IllegalOperationError("The specified file is not a GZIP file format file.");
+				throw new IllegalOperationError("The specified data is not in GZIP file format structure.");
 			}
 
 			// 1 byte CM -- should be 8 for DEFLATE or else throw an error
 			var cm:uint = srcBytes.readUnsignedByte();
 			if (cm != 8)
 			{
-				throw new IllegalOperationError("The specified file is not a GZIP file format file.");
+				throw new IllegalOperationError("The specified data is not in GZIP file format structure.");
 			}
 			
 			// 1 byte FLaGs
@@ -358,7 +381,7 @@ package com.probertson.utils
 			flagsError = (flags & 1 == 1) ? true : flagsError;
 			if (flagsError)
 			{
-				throw new IllegalOperationError("The specified file is not a GZIP file format file.");
+				throw new IllegalOperationError("The specified data is not in GZIP file format structure.");
 			}
 			
 			// 4 bytes MTIME (Modification Time in Unix epoch format; 0 means no time stamp is available)
@@ -423,7 +446,7 @@ package com.probertson.utils
 			// 4 bytes ISIZE (input size -- size of the original input data modulo 2^32)
 			var isize:uint = srcBytes.readUnsignedInt();
 			
-			return new GZIPFile(data, isize, new Date(mtime), src.name, fname, fcomment);
+			return new GZIPFile(data, isize, new Date(mtime), srcName, fname, fcomment);
 		}
 		
 		
