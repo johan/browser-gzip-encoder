@@ -253,22 +253,41 @@ package com.probertson.utils
 		/**
 		 * Uncompresses a GZIP-compressed-format file to a ByteArray object.
 		 * 
-		 * @param src	The location of the source file to uncompress. This file must
-		 * 				be a file that is compressed using the GZIP file format.
+		 * @param src	The location of the source file to uncompress, or the 
+		 * 				ByteArray object to uncompress.  The source
+		 * 				can be a file on the filesystem (a File instance), in 
+		 * 				which case the contents of the
+		 * 				file are read, compressed, and output as the result. 
+		 * 				Alternatively, the source can be a 
+		 * 				ByteArray instance, in which case the ByteArray's 
+		 * 				contents are compressed and output as the result. In 
+		 * 				either case the <code>src</code> object must
+		 * 				be compressed using the GZIP file format.
 		 * 
 		 * @returns		A ByteArray containing the uncompressed bytes that were
-		 * 				compressed and encoded in the source file.
+		 * 				compressed and encoded in the source file or ByteArray.
 		 * 
-		 * @throws ArgumentError	If the <code>src</code> argument is null; refers
-		 * 							to a directory; or refers to a file that doesn't
-		 * 							exist.
+		 * @throws ArgumentError	If the <code>src</code> argument is not a 
+		 * 							File or ByteArray instance; if
+		 * 							the <code>src</code> argument refers to a 
+		 * 							directory or a non-existent file;  or if
+		 * 							either argument is null.
 		 * 
-		 * @throws IllegalOperationError If the specified file is not a GZIP-format file.
+		 * @throws IllegalOperationError If the specified file or ByteArray 
+		 * 								 is not GZIP-format file or data.
 		 */
-		public function uncompressToByteArray(src:File):ByteArray
+		public function uncompressToByteArray(src:Object):ByteArray
 		{
 			// throws errors if src isn't valid
-			var gzipData:GZIPFile = parseGZIPFile(src);
+			var gzipData:GZIPFile;
+			if (src is File)
+			{
+				gzipData = parseGZIPFile(src as File);
+			}
+			else if (src is ByteArray)
+			{
+				gzipData = parseGZIPData(src as ByteArray);
+			}
 			var data:ByteArray = gzipData.getCompressedData();
 			
 			try
@@ -277,7 +296,7 @@ package com.probertson.utils
 			}
 			catch (error:Error)
 			{
-				throw new IllegalOperationError("The specified file is not a GZIP file format file.");
+				throw new IllegalOperationError("The specified source is not a GZIP file format file or data.");
 			}
 			
 			return data;
