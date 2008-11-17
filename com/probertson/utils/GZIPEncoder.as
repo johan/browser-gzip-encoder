@@ -257,10 +257,10 @@ package com.probertson.utils
 		 * 				ByteArray object to uncompress.  The source
 		 * 				can be a file on the filesystem (a File instance), in 
 		 * 				which case the contents of the
-		 * 				file are read, compressed, and output as the result. 
+		 * 				file are read, uncompressed, and output as the result. 
 		 * 				Alternatively, the source can be a 
 		 * 				ByteArray instance, in which case the ByteArray's 
-		 * 				contents are compressed and output as the result. In 
+		 * 				contents are uncompressed and output as the result. In 
 		 * 				either case the <code>src</code> object must
 		 * 				be compressed using the GZIP file format.
 		 * 
@@ -278,16 +278,24 @@ package com.probertson.utils
 		 */
 		public function uncompressToByteArray(src:Object):ByteArray
 		{
-			// throws errors if src isn't valid
 			var gzipData:GZIPFile;
+			
 			if (src is File)
 			{
-				gzipData = parseGZIPFile(src as File);
+				var srcFile:File = src as File;
+				
+				// throws errors if src doesn't exist or is a directory
+				gzipData = parseGZIPFile(srcFile);
 			}
 			else if (src is ByteArray)
 			{
 				gzipData = parseGZIPData(src as ByteArray);
 			}
+			else
+			{
+				throw new ArgumentError("The src argument must be a File or ByteArray instance");
+			}
+			
 			var data:ByteArray = gzipData.getCompressedData();
 			
 			try
