@@ -5,9 +5,9 @@ http://probertson.com/projects/gzipencoder/
 ***** BEGIN LICENSE BLOCK *****
 Version: MPL 1.1
 
-The contents of this file are subject to the Mozilla Public License Version 
-1.1 (the "License"); you may not use this file except in compliance with 
-the License. You may obtain a copy of the License at 
+The contents of this file are subject to the Mozilla Public License Version
+1.1 (the "License"); you may not use this file except in compliance with
+the License. You may obtain a copy of the License at
 http://www.mozilla.org/MPL/
 
 Software distributed under the License is distributed on an "AS IS" basis,
@@ -40,28 +40,42 @@ package com.probertson.utils
 	import flash.utils.CompressionAlgorithm;
 	import flash.utils.Endian;
 	
+	/**
+	 * A class for working with GZIP-encoded data. There are methods for compressing
+	 * files or data to GZIP format and writing them to files. There are methods for
+	 * uncompressing GZIP files or raw GZIP data and either writing the result data to
+	 * files or accessing it in memory as a ByteArray.
+	 *
+	 * <p>This class requires Adobe AIR. For a version without File-related functionality
+	 * (which only uses ByteArray objects for source and output data) see the
+	 * GZIPBytesEncoder class.</p>
+	 *
+	 * <p>This class contains methods which are merely wrapper methods on the GZIPBytesEncoder
+	 * class's methods. These methods exist for backwards compatibility, and if you want
+	 * to work purely with ByteArray data you can use either class.</p>
+	 */
 	public class GZIPEncoder
 	{
 	
 		/**
 		 * Writes a GZIP compressed file format file to a file stream.
-		 * 
+		 *
 		 * <p>This particular method takes a "least effort" approach, meaning any optional
 		 * metadata fields are not included in the GZIP file that's written to disk.</p>
-		 * 
+		 *
 		 * @param src	The source data to compress and embed in the GZIP file. The source
 		 * 				can be a file on the filesystem (a File instance), in which case the contents of the
-		 * 				file are read, compressed, and output to the file stream. Alternatively, the source can be a 
+		 * 				file are read, compressed, and output to the file stream. Alternatively, the source can be a
 		 * 				ByteArray instance, in which case the ByteArray's contents are compressed and output to the
 		 * 				file stream.
-		 * 
-		 * @param output	The File location to which the compressed GZIP format file should be written. 
+		 *
+		 * @param output	The File location to which the compressed GZIP format file should be written.
 		 * 					The user should have permission to write to the file location. If the location
-		 * 					specifies a file name, that file name will be used. If the output location is 
+		 * 					specifies a file name, that file name will be used. If the output location is
 		 * 					a directory, a new file will be created with the name "[src file name].gz". If src
 		 * 					is a ByteArray, and output only specifies a directory, the output file will
 		 * 					be created with the name "output.gz".
-		 * 
+		 *
 		 * @throws ArgumentError	If the <code>src</code> argument is not a File or ByteArray instance; if
 		 * 							the <code>src</code> argument refers to a directory or a non-existent file;  or if
 		 * 							either argument is null.
@@ -70,7 +84,7 @@ package com.probertson.utils
 		{
 			if (src == null || output == null)
 			{
-				throw new ArgumentError("src and outStream cannot be null.");
+				throw new ArgumentError("src and output can't be null.");
 			}
 			
 			var srcBytes:ByteArray;
@@ -115,88 +129,31 @@ package com.probertson.utils
 				throw new ArgumentError("src must be a File instance or a ByteArray instance");
 			}
 			
+			var encoder:GZIPBytesEncoder = new GZIPBytesEncoder();
+			var gzipBytes:ByteArray = encoder.compressToByteArray(srcBytes, fileTime);
+			
 			var outStream:FileStream = new FileStream();
 			outStream.open(target, FileMode.WRITE);
-			
-			// For details of gzip format, see IETF RFC 1952:
-			// http://www.ietf.org/rfc/rfc1952
-			
-			// gzip is little-endian
-			outStream.endian = Endian.LITTLE_ENDIAN;
-			
-			// 1 byte ID1 -- should be 31/0x1f
-			var id1:uint = 31;
-			outStream.writeByte(id1);
-			
-			// 1 byte ID2 -- should be 139/0x8b
-			var id2:uint = 139;
-			outStream.writeByte(id2);
-			
-			// 1 byte CM -- should be 8 for DEFLATE
-			var cm:uint = 8;
-			outStream.writeByte(cm);
-			
-			// 1 byte FLaGs
-			var flags:int = parseInt("00000000", 2);
-			outStream.writeByte(flags);
-			
-			// 4 bytes MTIME (Modification Time in Unix epoch format; 0 means no time stamp is available)
-			var mtime:uint = fileTime.time;
-			outStream.writeUnsignedInt(mtime);
-			
-			// 1 byte XFL (flags used by specific compression methods)
-			var xfl:uint = parseInt("00000100", 2);
-			outStream.writeByte(xfl);
-			// 1 byte OS
-			var os:uint;
-			if (Capabilities.os.indexOf("Windows") >= 0)
-			{
-				os = 11; // NTFS -- WinXP, Win2000, WinNT
-			}
-			else if (Capabilities.os.indexOf("Mac OS") >= 0)
-			{
-				os = 3; // Unix
-			}
-			else // no other OS is currently supported in Adobe AIR, but Linux will surely be next
-			{
-				os = 3; // Unix
-			}
-			outStream.writeByte(os);
-			
-			// calculate crc32 and filesize before compressing data
-			var crc32Gen:CRC32Generator = new CRC32Generator();
-			var crc32:uint = crc32Gen.generateCRC32(srcBytes);
-			
-			var isize:uint = srcBytes.length % Math.pow(2, 32);
-			
-	 		// Actual compressed data (up to end - 8 bytes)
-			srcBytes.compress(CompressionAlgorithm.DEFLATE);
-			outStream.writeBytes(srcBytes, 0, srcBytes.length);
-			
-			// 4 bytes CRC32
-	 		outStream.writeUnsignedInt(crc32);
-	 		
-			// 4 bytes ISIZE (input size -- size of the original input data modulo 2^32)
-			outStream.writeUnsignedInt(isize);
+			outStream.writeBytes(gzipBytes, 0, gzipBytes.length);
 			outStream.close();
 		}
 		
 		
 		/**
 		 * Uncompresses a GZIP-compressed-format file to another file location.
-		 * 
+		 *
 		 * @param src	The filesystem location of the GZIP format file to uncompress.
-		 * 
+		 *
 		 * @param output	The filesystem location where the uncompressed file should be saved.
 		 * 					If <code>output</code> specifies a file name, that file name will be used
-		 * 					for the new file, regardless of the original file name. If the argument 
+		 * 					for the new file, regardless of the original file name. If the argument
 		 * 					specifies a directory, the uncompressed file will be saved in that directory. In
 		 * 					that case, if the GZIP file includes file name information, the new file will
 		 * 					be saved with the original file name; if no file name is present, the new file
 		 * 					will be saved with the name of the source GZIP file, minus the ".gz" or ".gzip"
 		 * 					extension.
-		 * 
-		 * @throws ArgumentError	If <code>src</code> or <code>output</code> argument is null; 
+		 *
+		 * @throws ArgumentError	If <code>src</code> or <code>output</code> argument is null;
 		 * 							if <code>src</code> is a directory rather than a file; or
 		 * 							if <code>src</code> points to a file location that doesn't exist.
 		 */
@@ -252,28 +209,28 @@ package com.probertson.utils
 		
 		/**
 		 * Uncompresses a GZIP-compressed-format file to a ByteArray object.
-		 * 
-		 * @param src	The location of the source file to uncompress, or the 
+		 *
+		 * @param src	The location of the source file to uncompress, or the
 		 * 				ByteArray object to uncompress.  The source
-		 * 				can be a file on the filesystem (a File instance), in 
+		 * 				can be a file on the filesystem (a File instance), in
 		 * 				which case the contents of the
-		 * 				file are read, uncompressed, and output as the result. 
-		 * 				Alternatively, the source can be a 
-		 * 				ByteArray instance, in which case the ByteArray's 
-		 * 				contents are uncompressed and output as the result. In 
+		 * 				file are read, uncompressed, and output as the result.
+		 * 				Alternatively, the source can be a
+		 * 				ByteArray instance, in which case the ByteArray's
+		 * 				contents are uncompressed and output as the result. In
 		 * 				either case the <code>src</code> object must
 		 * 				be compressed using the GZIP file format.
-		 * 
+		 *
 		 * @returns		A ByteArray containing the uncompressed bytes that were
 		 * 				compressed and encoded in the source file or ByteArray.
-		 * 
-		 * @throws ArgumentError	If the <code>src</code> argument is not a 
+		 *
+		 * @throws ArgumentError	If the <code>src</code> argument is not a
 		 * 							File or ByteArray instance; if
-		 * 							the <code>src</code> argument refers to a 
+		 * 							the <code>src</code> argument refers to a
 		 * 							directory or a non-existent file;  or if
 		 * 							either argument is null.
-		 * 
-		 * @throws IllegalOperationError If the specified file or ByteArray 
+		 *
+		 * @throws IllegalOperationError If the specified file or ByteArray
 		 * 								 is not GZIP-format file or data.
 		 */
 		public function uncompressToByteArray(src:Object):ByteArray
@@ -313,17 +270,17 @@ package com.probertson.utils
 		
 		/**
 		 * Parses a GZIP-format file into an object with properties representing the important
-		 * characteristics of the GZIP file (the header and footer metadata, as well as the 
+		 * characteristics of the GZIP file (the header and footer metadata, as well as the
 		 * actual compressed data).
-		 * 
+		 *
 		 * @param src	The filesystem location of the GZIP file to parse.
-		 * 
+		 *
 		 * @returns		An object containing the information from the source GZIP file.
-		 * 
+		 *
 		 * @throws ArgumentError	If the <code>src</code> argument is null; refers
 		 * 							to a directory; or refers to a file that doesn't
 		 * 							exist.
-		 * 
+		 *
 		 * @throws IllegalOperationError If the specified file is not a GZIP-format file.
 		 */
 		public function parseGZIPFile(src:File):GZIPFile
@@ -344,140 +301,25 @@ package com.probertson.utils
 		
 		/**
 		 * Parses a GZIP-format ByteArray into an object with properties representing the important
-		 * characteristics of the GZIP data (the header and footer metadata, as well as the 
+		 * characteristics of the GZIP data (the header and footer metadata, as well as the
 		 * actual compressed data).
-		 * 
-		 * NOTE: parseGZIPData was extracted from parseGZIPFile by Danny Patterson (dannypatterson.com).
-		 * 
+		 *
+		 * <p>This method is simply a wrapper for the <code>GZIPBytesEncoder.parseGZIPData()</code>
+		 * method.</p>
+		 *
 		 * @param srcBytes	The bytearay of the GZIP data to parse.
 		 * @param srcName	The name of the GZIP file.
-		 * 
+		 *
 		 * @returns		An object containing the information from the source GZIP data.
-		 * 
+		 *
 		 * @throws ArgumentError	If the <code>srcBytes</code> argument is null
-		 * 
+		 *
 		 * @throws IllegalOperationError If the specified data is not in GZIP-format.
 		 */
 		public function parseGZIPData(srcBytes:ByteArray, srcName:String = ""):GZIPFile
 		{
-			// For details of gzip format, see IETF RFC 1952:
-			// http://www.ietf.org/rfc/rfc1952
-			
-			// gzip is little-endian
-			srcBytes.endian = Endian.LITTLE_ENDIAN;
-			
-			// 1 byte ID1 -- should be 31/0x1f or else throw an error
-			var id1:uint = srcBytes.readUnsignedByte();
-			if (id1 != 0x1f)
-			{
-				throw new IllegalOperationError("The specified data is not in GZIP file format structure.");
-			}
-			
-			// 1 byte ID2 -- should be 139/0x8b or else throw an error
-			var id2:uint = srcBytes.readUnsignedByte();
-			if (id2 != 0x8b)
-			{
-				throw new IllegalOperationError("The specified data is not in GZIP file format structure.");
-			}
-
-			// 1 byte CM -- should be 8 for DEFLATE or else throw an error
-			var cm:uint = srcBytes.readUnsignedByte();
-			if (cm != 8)
-			{
-				throw new IllegalOperationError("The specified data is not in GZIP file format structure.");
-			}
-			
-			// 1 byte FLaGs
-			var flags:int = srcBytes.readByte();
-			
-			// ftext: the file is probably ASCII text
-			var hasFtext:Boolean = ((flags >> 7) & 1) == 1;
-			
-			// fhcrc: a CRC16 for the gzip header is present
-			var hasFhcrc:Boolean = ((flags >> 6) & 1) == 1;
-			
-			// fextra: option extra fields are present
-			var hasFextra:Boolean = ((flags >> 5) & 1) == 1;
-			
-			// fname: an original file name is present, terminated by a zero byte
-			var hasFname:Boolean = ((flags >> 4) & 1) == 1;
-			
-			// fcomment: a zero-terminated file comment (intended for human consumption) is present
-			var hasFcomment:Boolean = ((flags >> 3) & 1) == 1;
-			
-			// must throw an error if any of the remaining bits are non-zero
-			var flagsError:Boolean = false;
-			flagsError = ((flags >> 2) & 1 == 1) ? true : flagsError;
-			flagsError = ((flags >> 1) & 1 == 1) ? true : flagsError;
-			flagsError = (flags & 1 == 1) ? true : flagsError;
-			if (flagsError)
-			{
-				throw new IllegalOperationError("The specified data is not in GZIP file format structure.");
-			}
-			
-			// 4 bytes MTIME (Modification Time in Unix epoch format; 0 means no time stamp is available)
-			var mtime:uint = srcBytes.readUnsignedInt();
-			
-			// 1 byte XFL (flags used by specific compression methods)
-			var xfl:uint = srcBytes.readUnsignedByte();
-			
-			// 1 byte OS
-			var os:uint = srcBytes.readUnsignedByte();
-			
-			// (if FLG.EXTRA is set) 2 bytes XLEN, XLEN bytes of extra field
-			if (hasFextra)
-			{
-				var extra:String = srcBytes.readUTF();
-			}
-			
-			// (if FLG.FNAME is set) original filename, terminated by 0
-			var fname:String = null;
-	 		if (hasFname)
-			{
-				var fnameBytes:ByteArray = new ByteArray();
-				while (srcBytes.readUnsignedByte() != 0)
-				{
-					// move position back by 1 to make up for the readUnsignedByte() in the conditional
-					srcBytes.position -= 1;
-					fnameBytes.writeByte(srcBytes.readByte());
-				}
-				fnameBytes.position = 0;
-				fname = fnameBytes.readUTFBytes(fnameBytes.length);
-			}
-			
-			// (if FLG.FCOMMENT is set) file comment, zero terminated
-			var fcomment:String;
-	 		if (hasFcomment)
-			{
-				var fcommentBytes:ByteArray = new ByteArray();
-				while (srcBytes.readUnsignedByte() != 0)
-				{
-					// move position back by 1 to make up for the readUnsignedByte() in the conditional
-					srcBytes.position -= 1;
-					fcommentBytes.writeByte(srcBytes.readByte());
-				}
-				fcommentBytes.position = 0;
-				fcomment = fcommentBytes.readUTFBytes(fcommentBytes.length);
-			}
-			
-			// (if FLG.FHCRC is set) 2 bytes CRC16
-	 		if (hasFhcrc)
-			{
-				var fhcrc:int = srcBytes.readUnsignedShort();
-			}
-			
-			// Actual compressed data (up to end - 8 bytes)
-			var dataSize:int = (srcBytes.length - srcBytes.position) - 8;
-			var data:ByteArray = new ByteArray();
-			srcBytes.readBytes(data, 0, dataSize);
-			
-			// 4 bytes CRC32
-			var crc32:uint = srcBytes.readUnsignedInt();
-			
-			// 4 bytes ISIZE (input size -- size of the original input data modulo 2^32)
-			var isize:uint = srcBytes.readUnsignedInt();
-			
-			return new GZIPFile(data, isize, new Date(mtime), srcName, fname, fcomment);
+			var decoder:GZIPBytesEncoder = new GZIPBytesEncoder();
+			return decoder.parseGZIPData(srcBytes, srcName);
 		}
 		
 		
@@ -486,7 +328,7 @@ package com.probertson.utils
 		{
 			if (src == null)
 			{
-				throw new ArgumentError("src cannot be null");
+				throw new ArgumentError("src can't be null");
 			}
 			
 			if (src.isDirectory)
