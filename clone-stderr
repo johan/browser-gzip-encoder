@@ -1,0 +1,7 @@
+Found possible branch point: http://ascompress.googlecode.com/svn/trunk => http://ascompress.googlecode.com/svn/tags/0.1.0.2, 6
+Found branch parent: (tags/0.1.0.2) 693f74bf11a0db51c50fc18b111f5c8f9f94ca09
+Following parent with do_switch
+Successfully followed parent
+W: -empty_dir: trunk/com
+Checked out HEAD:
+  http://ascompress.googlecode.com/svn/trunk r11

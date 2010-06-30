@@ -1,0 +1,32 @@
+Initialized empty Git repository in /Users/jhs/cvs/browser-gzip-encoder/.git/
+r1 = c9875a504981672389416e35cd04a8989f422f28 (trunk)
+	A	com/probertson/utils/CRC32Generator.as
+	A	com/probertson/utils/GZIPEncoder.as
+	A	com/probertson/utils/GZIPFile.as
+r2 = ba4bdeb9686ae02a790505aade2437130978161c (trunk)
+	M	com/probertson/utils/GZIPEncoder.as
+r3 = ee5157b65bf86c7389984e8164f488158529fcf9 (trunk)
+	M	com/probertson/utils/GZIPEncoder.as
+r4 = c3bcb893d22ca60ccdae5bae139c11d67d073499 (trunk)
+	M	com/probertson/utils/GZIPEncoder.as
+r5 = d16a87c71217c21437f791f93dd37c82efac4009 (trunk)
+	M	com/probertson/utils/GZIPEncoder.as
+r6 = 693f74bf11a0db51c50fc18b111f5c8f9f94ca09 (trunk)
+r7 = a2c38fab05b6142ca5e1a40dfb20136aaa14b8d9 (tags/0.1.0.2)
+	D	com/probertson/utils/CRC32Generator.as
+	D	com/probertson/utils/GZIPEncoder.as
+	D	com/probertson/utils/GZIPFile.as
+	D	com/
+	A	src/com/probertson/utils/CRC32Generator.as
+	A	src/com/probertson/utils/GZIPEncoder.as
+	A	src/com/probertson/utils/GZIPFile.as
+r8 = be14e78be31b6f0de90349777115ca7d239423a4 (trunk)
+	A	src/com/probertson/utils/GZIPBytesEncoder.as
+	M	src/com/probertson/utils/GZIPEncoder.as
+r9 = 51ebe696e49ab90e8dbfd45fa0315c3e3a4ab326 (trunk)
+r10 = 1c61fb1ff0ccefe2d27965d8b9377687e1144d65 (trunk)
+	M	src/com/probertson/utils/GZIPBytesEncoder.as
+	M	src/com/probertson/utils/CRC32Generator.as
+	M	src/com/probertson/utils/GZIPEncoder.as
+	M	src/com/probertson/utils/GZIPFile.as
+r11 = 98656a9a984f6fa836ff6b39a6b99a8c31b02845 (trunk)
